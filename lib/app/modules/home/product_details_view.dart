@@ -11,6 +11,8 @@ class ProductDetailsView extends StatelessWidget {
   final CartController cartController = Get.find();
   final RxInt quantity = 1.obs; // Observable for quantity
   final RxString selectedWeight = "1Kg".obs; // Observable for weight selection
+  final Rx<Product> selectedProduct; // Reactive selected product
+
   final Map<String, double> weightOptions = {
     "250g": 0.25,
     "500g": 0.5,
@@ -19,12 +21,11 @@ class ProductDetailsView extends StatelessWidget {
     "2Kg": 2.0
   };
 
-  ProductDetailsView({required this.product});
+  ProductDetailsView({required this.product})
+      : selectedProduct = product.obs; // Initialize with passed product
 
   @override
   Widget build(BuildContext context) {
-    bool isFruitsAndVeg = product.categoryName == "Fruits & Veg";
-
     return PopScope(
         canPop: false,
         onPopInvokedWithResult: (s, didPop) {
@@ -33,23 +34,25 @@ class ProductDetailsView extends StatelessWidget {
           }
         },
         child: Scaffold(
-          appBar: AppBar(title: Text(product.name)),
+          appBar: AppBar(
+            title: Obx(() => Text(selectedProduct.value.name)),
+          ),
           body: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Product Image
-                Container(
+                Obx(() => Container(
                   height: 250,
                   width: double.infinity,
                   decoration: BoxDecoration(
                     image: DecorationImage(
                       image: NetworkImage(
-                          "https://foryouhypermart.com/images/${product.image}"),
+                          "https://foryouhypermart.com/images/${selectedProduct.value.image}"),
                       fit: BoxFit.cover,
                     ),
                   ),
-                ),
+                )),
 
                 // Product Name & Price
                 Padding(
@@ -57,17 +60,19 @@ class ProductDetailsView extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(product.name,
+                      Obx(() => Text(selectedProduct.value.name,
                           style: TextStyle(
-                              fontSize: 22, fontWeight: FontWeight.bold)),
+                              fontSize: 22, fontWeight: FontWeight.bold))),
                       SizedBox(height: 8),
 
                       // Dynamic price update
                       Obx(() {
-                        double price = product.price;
+                        bool isFruitsAndVeg =
+                            selectedProduct.value.categoryName == "Fruits & Veg";
+                        double price = selectedProduct.value.price;
                         double totalPrice = isFruitsAndVeg
                             ? price *
-                                (weightOptions[selectedWeight.value] ?? 1.0)
+                            (weightOptions[selectedWeight.value] ?? 1.0)
                             : price * quantity.value;
 
                         return Text(
@@ -80,10 +85,13 @@ class ProductDetailsView extends StatelessWidget {
                       Divider(),
 
                       // Quantity or Weight Selector
-                      if (isFruitsAndVeg)
-                        _buildWeightSelector()
-                      else
-                        _buildQuantitySelector(),
+                      Obx(() {
+                        bool isFruitsAndVeg =
+                            selectedProduct.value.categoryName == "Fruits & Veg";
+                        return isFruitsAndVeg
+                            ? _buildWeightSelector()
+                            : _buildQuantitySelector();
+                      }),
 
                       SizedBox(height: 16),
 
@@ -92,10 +100,10 @@ class ProductDetailsView extends StatelessWidget {
                           style: TextStyle(
                               fontSize: 18, fontWeight: FontWeight.bold)),
                       SizedBox(height: 8),
-                      Text(
-                        "This is a high-quality ${product.name}. Get it now at the best price from our store!",
+                      Obx(() => Text(
+                        "This is a high-quality ${selectedProduct.value.name}. Get it now at the best price from our store!",
                         style: TextStyle(fontSize: 16),
-                      ),
+                      )),
                       SizedBox(height: 16),
                     ],
                   ),
@@ -106,23 +114,25 @@ class ProductDetailsView extends StatelessWidget {
                   padding: EdgeInsets.symmetric(horizontal: 16),
                   child: ElevatedButton(
                     onPressed: () {
-                      double finalPrice = product.price *
+                      bool isFruitsAndVeg =
+                          selectedProduct.value.categoryName == "Fruits & Veg";
+                      double finalPrice = selectedProduct.value.price *
                           (isFruitsAndVeg
                               ? (weightOptions[selectedWeight.value] ?? 1.0)
                               : quantity.value);
 
                       cartController.addToCart(CartItem(
-                        name: product.name,
+                        name: selectedProduct.value.name,
                         imageUrl:
-                            "https://foryouhypermart.com/images/${product.image}",
+                        "https://foryouhypermart.com/images/${selectedProduct.value.image}",
                         weight:
-                            isFruitsAndVeg ? selectedWeight.value : "1 unit",
+                        isFruitsAndVeg ? selectedWeight.value : "1 unit",
                         pricePerUnit: finalPrice,
                         quantity: isFruitsAndVeg ? 1 : quantity.value,
                       ));
 
                       Get.snackbar("Added to Cart",
-                          "${isFruitsAndVeg ? selectedWeight.value : quantity.value} of ${product.name} added.");
+                          "${isFruitsAndVeg ? selectedWeight.value : quantity.value} of ${selectedProduct.value.name} added.");
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange,
@@ -147,19 +157,19 @@ class ProductDetailsView extends StatelessWidget {
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         SizedBox(width: 10),
         Obx(() => DropdownButton<String>(
-              value: selectedWeight.value,
-              onChanged: (String? newWeight) {
-                if (newWeight != null) {
-                  selectedWeight.value = newWeight;
-                }
-              },
-              items: weightOptions.keys.map((String weight) {
-                return DropdownMenuItem<String>(
-                  value: weight,
-                  child: Text(weight),
-                );
-              }).toList(),
-            )),
+          value: selectedWeight.value,
+          onChanged: (String? newWeight) {
+            if (newWeight != null) {
+              selectedWeight.value = newWeight;
+            }
+          },
+          items: weightOptions.keys.map((String weight) {
+            return DropdownMenuItem<String>(
+              value: weight,
+              child: Text(weight),
+            );
+          }).toList(),
+        )),
       ],
     );
   }
@@ -180,9 +190,9 @@ class ProductDetailsView extends StatelessWidget {
           },
         ),
         Obx(() => Text(
-              "${quantity.value}",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            )),
+          "${quantity.value}",
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        )),
         IconButton(
           icon: Icon(Icons.add_circle_outline, color: Colors.green),
           onPressed: () {
@@ -207,7 +217,8 @@ class ProductDetailsView extends StatelessWidget {
           child: Obx(() {
             var suggestedProducts = homeController.products
                 .where((p) =>
-                    p.categoryId == product.categoryId && p.id != product.id)
+            p.categoryId == selectedProduct.value.categoryId &&
+                p.id != selectedProduct.value.id)
                 .toList();
 
             if (suggestedProducts.isEmpty) {
@@ -222,7 +233,7 @@ class ProductDetailsView extends StatelessWidget {
 
                 return GestureDetector(
                   onTap: () {
-                    Get.to(() => ProductDetailsView(product: suggestedProduct));
+                    selectedProduct.value = suggestedProduct; // Update product dynamically
                   },
                   child: Container(
                     width: 120,

@@ -10,10 +10,10 @@ class ProductResponse {
       ProductResponse.fromMap(json.decode(str));
 
   factory ProductResponse.fromMap(Map<String, dynamic> json) => ProductResponse(
-    status: json["status"],
-    products: List<Product>.from(
-        json["products"].map((x) => Product.fromMap(x))),
-  );
+        status: json["status"],
+        products:
+            List<Product>.from(json["products"].map((x) => Product.fromMap(x))),
+      );
 }
 
 class Product {
@@ -24,8 +24,10 @@ class Product {
   final int categoryId;
   final int subCategoryId;
   final String categoryName;
+  final bool isFavourite;
 
   Product({
+    required this.isFavourite,
     required this.id,
     required this.name,
     required this.price,
@@ -36,12 +38,13 @@ class Product {
   });
 
   factory Product.fromMap(Map<String, dynamic> json) => Product(
-    id: json["id"],
-    name: json["name"],
-    price: double.tryParse(json["price"] ?? "0") ?? 0.0,
-    image: json["image"],
-    categoryId: json["category_id"],
-    subCategoryId: json["sub_category_id"],
-    categoryName: json["category_name"],
-  );
+        isFavourite: json["isFavourite"] ?? true,
+        id: json["id"],
+        name: json["name"],
+        price: double.tryParse(json["price"] ?? "0") ?? 0.0,
+        image: json["image"],
+        categoryId: json["category_id"],
+        subCategoryId: json["sub_category_id"],
+        categoryName: json["category_name"],
+      );
 }

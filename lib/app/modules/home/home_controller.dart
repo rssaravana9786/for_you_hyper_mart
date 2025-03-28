@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 class HomeController extends GetxController {
   var products = <Product>[].obs;
   var isLoading = true.obs;
+  var isFavourite = false.obs;
   var selectedLocation = "Select Location".obs; // Default location
 
   @override
@@ -17,13 +18,15 @@ class HomeController extends GetxController {
     selectedLocation.value = newLocation;
   }
 
+  void toggleFavourite(RxBool newValue) {
+    print(isFavourite.value.toString());
+    newValue.value = !newValue.value;
+  }
+
   void fetchProducts(int categoryId) async {
     isLoading(true);
     try {
       var productList = await ApiService().fetchProductsByCategory(categoryId);
-      if (productList.isEmpty) {
-        print("No products found for category $categoryId");
-      }
       products.value = productList;
     } finally {
       isLoading(false);

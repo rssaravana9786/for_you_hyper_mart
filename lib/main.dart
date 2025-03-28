@@ -1,12 +1,16 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:for_you_hyper_mart/app/modules/NavBar/bottom_nav_bar.dart';
+import 'package:for_you_hyper_mart/app/modules/NavBar/navigation_controller.dart';
 import 'package:for_you_hyper_mart/app/modules/cart/cart_view.dart';
+import 'package:for_you_hyper_mart/app/modules/home/connectivity_controller.dart';
 import 'package:for_you_hyper_mart/app/modules/home/home_view.dart';
 import 'package:for_you_hyper_mart/app/modules/home/product_details_view.dart';
 import 'package:for_you_hyper_mart/app/modules/user/user.dart';
 import 'package:get/get.dart';
 
 void main() {
+  Get.put(InternetController());
   runApp(const MyApp());
 }
 
@@ -38,7 +42,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-/// ✅ Fix: `Get.offNamed()` Replaces Splash Screen (Prevents Back Navigation)
 class SplashScreen extends StatefulWidget {
   @override
   _SplashScreenState createState() => _SplashScreenState();
@@ -61,6 +64,31 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Image.asset("assets/logo.jpeg",
             width: 150, height: 150), // Your splash logo
       ),
+    );
+  }
+}
+
+class RootScreen extends StatelessWidget {
+  RootScreen({Key? key}) : super(key: key);
+
+  final BottomNavigationController controller =
+      Get.put(BottomNavigationController());
+
+  // List of screens to display based on the selected index
+  final List<Widget> _screens = [
+    HomeView(),
+    WishListView(),
+    CartPage(),
+    UserManagementPage()
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Obx(
+        () => _screens[controller.selectedIndex.value],
+      ),
+      bottomNavigationBar: CustomBottomNavigationBar(),
     );
   }
 }
